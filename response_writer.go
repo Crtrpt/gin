@@ -43,6 +43,7 @@ type ResponseWriter interface {
 	Pusher() http.Pusher
 }
 
+// 响应返回写入器
 type responseWriter struct {
 	http.ResponseWriter
 	size   int
@@ -58,9 +59,10 @@ func (w *responseWriter) reset(writer http.ResponseWriter) {
 }
 
 func (w *responseWriter) WriteHeader(code int) {
+
 	if code > 0 && w.status != code {
 		if w.Written() {
-			debugPrint("[WARNING] Headers were already written. Wanted to override status code %d with %d", w.status, code)
+			debugPrint("[警告] header覆盖输出 Headers were already written. Wanted to override status code %d with %d", w.status, code)
 			return
 		}
 		w.status = code

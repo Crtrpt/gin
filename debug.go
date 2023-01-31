@@ -14,7 +14,7 @@ import (
 
 const ginSupportMinGoVer = 16
 
-// IsDebugging returns true if the framework is running in debug mode.
+// 返回true表示debug模式
 // Use SetMode(gin.ReleaseMode) to disable debug mode.
 func IsDebugging() bool {
 	return ginMode == debugCode
@@ -43,19 +43,21 @@ func debugPrintLoadTemplate(tmpl *template.Template) {
 			buf.WriteString(tmpl.Name())
 			buf.WriteString("\n")
 		}
-		debugPrint("Loaded HTML Templates (%d): \n%s\n", len(tmpl.Templates()), buf.String())
+		debugPrint("加载 html 模板 (%d): \n%s\n", len(tmpl.Templates()), buf.String())
 	}
 }
 
+// 调试打印输出
 func debugPrint(format string, values ...any) {
 	if IsDebugging() {
 		if !strings.HasSuffix(format, "\n") {
 			format += "\n"
 		}
-		fmt.Fprintf(DefaultWriter, "[GIN-debug] "+format, values...)
+		fmt.Fprintf(DefaultWriter, "[调试信息] "+format, values...)
 	}
 }
 
+// 获取小版本号
 func getMinVer(v string) (uint64, error) {
 	first := strings.IndexByte(v, '.')
 	last := strings.LastIndexByte(v, '.')
@@ -66,36 +68,35 @@ func getMinVer(v string) (uint64, error) {
 }
 
 func debugPrintWARNINGDefault() {
+	//检查runtime 版本 和 gin 最小支持版本进行对比
 	if v, e := getMinVer(runtime.Version()); e == nil && v < ginSupportMinGoVer {
-		debugPrint(`[WARNING] Now Gin requires Go 1.16+.
+		debugPrint(`[警告] gin 最低版本 Go 1.16+.
 
 `)
 	}
-	debugPrint(`[WARNING] Creating an Engine instance with the Logger and Recovery middleware already attached.
+	debugPrint(`[警告] 创建一个 Engine 实例 开启 Logger 和 Recovery 中间件.
 
 `)
 }
 
 func debugPrintWARNINGNew() {
-	debugPrint(`[WARNING] Running in "debug" mode. Switch to "release" mode in production.
- - using env:	export GIN_MODE=release
- - using code:	gin.SetMode(gin.ReleaseMode)
+	debugPrint(`[警告] 当前工作在调试模式  在生产环境需要切换到 release 模式.
+ - 使用环境变量 :	export GIN_MODE=release
+ - 使用代码 :	gin.SetMode(gin.ReleaseMode)
 
 `)
 }
 
 func debugPrintWARNINGSetHTMLTemplate() {
-	debugPrint(`[WARNING] Since SetHTMLTemplate() is NOT thread-safe. It should only be called
-at initialization. ie. before any route is registered or the router is listening in a socket:
-
+	debugPrint(`[警告] SetHTMLTemplate() 不是线程安全的 请在注册路由和 监听socket之前设置
 	router := gin.Default()
-	router.SetHTMLTemplate(template) // << good place
+	router.SetHTMLTemplate(template) // << 好的写法
 
 `)
 }
 
 func debugPrintError(err error) {
 	if err != nil && IsDebugging() {
-		fmt.Fprintf(DefaultErrorWriter, "[GIN-debug] [ERROR] %v\n", err)
+		fmt.Fprintf(DefaultErrorWriter, "[GIN-调试] [错误] %v\n", err)
 	}
 }

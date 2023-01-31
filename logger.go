@@ -41,9 +41,10 @@ type LoggerConfig struct {
 	Formatter LogFormatter
 
 	// Output is a writer where logs are written.
-	// Optional. Default value is gin.DefaultWriter.
+	// 输出流
 	Output io.Writer
 
+	//忽略的路径
 	// SkipPaths is an url path array which logs are not written.
 	// Optional.
 	SkipPaths []string
@@ -60,25 +61,26 @@ type LogFormatterParams struct {
 	TimeStamp time.Time
 	// StatusCode is HTTP response code.
 	StatusCode int
-	// Latency is how much time the server cost to process a certain request.
+	// 请求耗时
 	Latency time.Duration
-	// ClientIP equals Context's ClientIP method.
+	// 客户端ip地址
 	ClientIP string
-	// Method is the HTTP method given to the request.
+	// 请求的方法
 	Method string
-	// Path is a path the client requests.
+	// 请求的路径
 	Path string
-	// ErrorMessage is set if error has occurred in processing the request.
+	// 错误消息
 	ErrorMessage string
 	// isTerm shows whether gin's output descriptor refers to a terminal.
 	isTerm bool
-	// BodySize is the size of the Response Body
+	// 返回的字节树
 	BodySize int
-	// Keys are the keys set on the request's context.
+	// 请求上下文的内容
 	Keys map[string]any
 }
 
 // StatusCodeColor is the ANSI color for appropriately logging http status code to a terminal.
+// http 状态码
 func (p *LogFormatterParams) StatusCodeColor() string {
 	code := p.StatusCode
 
@@ -140,7 +142,7 @@ var defaultLogFormatter = func(param LogFormatterParams) string {
 	if param.Latency > time.Minute {
 		param.Latency = param.Latency.Truncate(time.Second)
 	}
-	return fmt.Sprintf("[GIN] %v |%s %3d %s| %13v | %15s |%s %-7s %s %#v\n%s",
+	return fmt.Sprintf("[输出] %v |%s %3d %s| %13v | %15s |%s %-7s %s %#v\n%s",
 		param.TimeStamp.Format("2006/01/02 - 15:04:05"),
 		statusColor, param.StatusCode, resetColor,
 		param.Latency,
@@ -180,6 +182,7 @@ func ErrorLoggerT(typ ErrorType) HandlerFunc {
 // Logger instances a Logger middleware that will write the logs to gin.DefaultWriter.
 // By default, gin.DefaultWriter = os.Stdout.
 func Logger() HandlerFunc {
+	fmt.Printf("%v", "使用logger中间件默认输出到标准输出")
 	return LoggerWithConfig(LoggerConfig{})
 }
 

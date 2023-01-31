@@ -6,6 +6,7 @@ package gin
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"log"
 	"math"
@@ -48,14 +49,20 @@ const abortIndex int8 = math.MaxInt8 >> 1
 
 // Context is the most important part of gin. It allows us to pass variables between middleware,
 // manage the flow, validate the JSON of a request and render a JSON response for example.
+// 中间件之间传递参数  验证请求和返回json
 type Context struct {
 	writermem responseWriter
-	Request   *http.Request
-	Writer    ResponseWriter
-
-	Params   Params
+	//请求
+	Request *http.Request
+	//相应
+	Writer ResponseWriter
+	//参数
+	Params Params
+	//处理链
 	handlers HandlersChain
-	index    int8
+	//索引
+	index int8
+	//全路径
 	fullPath string
 
 	engine       *Engine
@@ -63,6 +70,7 @@ type Context struct {
 	skippedNodes *[]skippedNode
 
 	// This mutex protects Keys map.
+	// keys 读写锁
 	mu sync.RWMutex
 
 	// Keys is a key/value pair exclusively for the context of each request.
@@ -110,6 +118,7 @@ func (c *Context) reset() {
 // Copy returns a copy of the current context that can be safely used outside the request's scope.
 // This has to be used when the context has to be passed to a goroutine.
 func (c *Context) Copy() *Context {
+	//创建一个新的context
 	cp := Context{
 		writermem: c.writermem,
 		Request:   c.Request,
@@ -125,6 +134,7 @@ func (c *Context) Copy() *Context {
 		cp.Keys[k] = v
 	}
 	paramCopy := make([]Param, len(cp.Params))
+	//参数复制
 	copy(paramCopy, cp.Params)
 	cp.Params = paramCopy
 	return &cp
@@ -132,12 +142,14 @@ func (c *Context) Copy() *Context {
 
 // HandlerName returns the main handler's name. For example if the handler is "handleGetUsers()",
 // this function will return "main.handleGetUsers".
+// 返回处理器名称
 func (c *Context) HandlerName() string {
 	return nameOfFunction(c.handlers.Last())
 }
 
 // HandlerNames returns a list of all registered handlers for this context in descending order,
 // following the semantics of HandlerName()
+// 返回当前context 所有注册的名称
 func (c *Context) HandlerNames() []string {
 	hn := make([]string, 0, len(c.handlers))
 	for _, val := range c.handlers {
@@ -162,7 +174,7 @@ func (c *Context) FullPath() string {
 }
 
 /************************************/
-/*********** FLOW CONTROL ***********/
+/*********** 流程控制 ***********/
 /************************************/
 
 // Next should be used only inside middleware.
@@ -186,6 +198,7 @@ func (c *Context) IsAborted() bool {
 // If the authorization fails (ex: the password does not match), call Abort to ensure the remaining handlers
 // for this request are not called.
 func (c *Context) Abort() {
+	fmt.Printf("%v", "结束")
 	c.index = abortIndex
 }
 
@@ -244,8 +257,7 @@ func (c *Context) Error(err error) *Error {
 /******** METADATA MANAGEMENT********/
 /************************************/
 
-// Set is used to store a new key/value pair exclusively for this context.
-// It also lazy initializes  c.Keys if it was not used previously.
+// 元数据管理 懒加载
 func (c *Context) Set(key string, value any) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -256,8 +268,7 @@ func (c *Context) Set(key string, value any) {
 	c.Keys[key] = value
 }
 
-// Get returns the value for the given key, ie: (value, true).
-// If the value does not exist it returns (nil, false)
+// 获取key的值
 func (c *Context) Get(key string) (value any, exists bool) {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
@@ -834,7 +845,7 @@ func (c *Context) requestHeader(key string) string {
 }
 
 /************************************/
-/******** RESPONSE RENDERING ********/
+/******** 返回数据渲染 ********/
 /************************************/
 
 // bodyAllowedForStatus is a copy of http.bodyAllowedForStatus non-exported function.
@@ -915,6 +926,7 @@ func (c *Context) Cookie(name string) (string, error) {
 
 // Render writes the response headers and calls render.Render to render data.
 func (c *Context) Render(code int, r render.Render) {
+	fmt.Println("渲染输出")
 	c.Status(code)
 
 	if !bodyAllowedForStatus(code) {
@@ -999,11 +1011,13 @@ func (c *Context) TOML(code int, obj interface{}) {
 
 // ProtoBuf serializes the given struct as ProtoBuf into the response body.
 func (c *Context) ProtoBuf(code int, obj any) {
+	fmt.Println("pb输出渲染")
 	c.Render(code, render.ProtoBuf{Data: obj})
 }
 
 // String writes the given string into the response body.
 func (c *Context) String(code int, format string, values ...any) {
+	fmt.Println("字符串输出渲染")
 	c.Render(code, render.String{Format: format, Data: values})
 }
 
@@ -1072,14 +1086,18 @@ func (c *Context) SSEvent(name string, message any) {
 // Stream sends a streaming response and returns a boolean
 // indicates "Is client disconnected in middle of stream"
 func (c *Context) Stream(step func(w io.Writer) bool) bool {
+
 	w := c.Writer
 	clientGone := w.CloseNotify()
 	for {
 		select {
+		//判断客户端是否断开连接
 		case <-clientGone:
 			return true
 		default:
+			//判断是否保持打开状态
 			keepOpen := step(w)
+			fmt.Print("输出所有数据给客户端")
 			w.Flush()
 			if !keepOpen {
 				return false

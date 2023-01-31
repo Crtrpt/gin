@@ -179,6 +179,7 @@ var _ IRouter = (*Engine)(nil)
 func New() *Engine {
 	debugPrintWARNINGNew()
 	engine := &Engine{
+		//路由组
 		RouterGroup: RouterGroup{
 			Handlers: nil,
 			basePath: "/",
@@ -202,16 +203,19 @@ func New() *Engine {
 		trustedCIDRs:           defaultTrustedCIDRs,
 	}
 	engine.RouterGroup.engine = engine
+	//初始化一个池??
 	engine.pool.New = func() any {
 		return engine.allocateContext(engine.maxParams)
 	}
 	return engine
 }
 
-// Default returns an Engine instance with the Logger and Recovery middleware already attached.
+// 默认返回一个携带logger 和 recovery engine 实例
 func Default() *Engine {
 	debugPrintWARNINGDefault()
+	//创建一个gin 实例
 	engine := New()
+	//增加 logger 和 recovery 中间件
 	engine.Use(Logger(), Recovery())
 	return engine
 }

@@ -15,7 +15,7 @@ var (
 	// regEnLetter matches english letters for http method name
 	regEnLetter = regexp.MustCompile("^[A-Z]+$")
 
-	// anyMethods for RouterGroup Any method
+	// http方法集合
 	anyMethods = []string{
 		http.MethodGet, http.MethodPost, http.MethodPut, http.MethodPatch,
 		http.MethodHead, http.MethodOptions, http.MethodDelete, http.MethodConnect,
@@ -30,6 +30,7 @@ type IRouter interface {
 }
 
 // IRoutes defines all router handle interface.
+// 定义路由处理接口
 type IRoutes interface {
 	Use(...HandlerFunc) IRoutes
 
@@ -60,14 +61,13 @@ type RouterGroup struct {
 
 var _ IRouter = (*RouterGroup)(nil)
 
-// Use adds middleware to the group, see example code in GitHub.
+// 给指定组增加相应的中间件
 func (group *RouterGroup) Use(middleware ...HandlerFunc) IRoutes {
 	group.Handlers = append(group.Handlers, middleware...)
 	return group.returnObj()
 }
 
-// Group creates a new router group. You should add all the routes that have common middlewares or the same path prefix.
-// For example, all the routes that use a common middleware for authorization could be grouped.
+// 创建一个路由组 给相同的前缀增加相应的中间件
 func (group *RouterGroup) Group(relativePath string, handlers ...HandlerFunc) *RouterGroup {
 	return &RouterGroup{
 		Handlers: group.combineHandlers(handlers),
@@ -76,7 +76,7 @@ func (group *RouterGroup) Group(relativePath string, handlers ...HandlerFunc) *R
 	}
 }
 
-// BasePath returns the base path of router group.
+// 返回路由组基础路径
 // For example, if v := router.Group("/rest/n/v1/api"), v.BasePath() is "/rest/n/v1/api".
 func (group *RouterGroup) BasePath() string {
 	return group.basePath
@@ -189,7 +189,7 @@ func (group *RouterGroup) Static(relativePath, root string) IRoutes {
 }
 
 // StaticFS works just like `Static()` but a custom `http.FileSystem` can be used instead.
-// Gin by default uses: gin.Dir()
+// 静态文件系统
 func (group *RouterGroup) StaticFS(relativePath string, fs http.FileSystem) IRoutes {
 	if strings.Contains(relativePath, ":") || strings.Contains(relativePath, "*") {
 		panic("URL parameters can not be used when serving a static folder")
@@ -203,6 +203,7 @@ func (group *RouterGroup) StaticFS(relativePath string, fs http.FileSystem) IRou
 	return group.returnObj()
 }
 
+// 创建一个静态处理器
 func (group *RouterGroup) createStaticHandler(relativePath string, fs http.FileSystem) HandlerFunc {
 	absolutePath := group.calculateAbsolutePath(relativePath)
 	fileServer := http.StripPrefix(absolutePath, http.FileServer(fs))
@@ -230,13 +231,14 @@ func (group *RouterGroup) createStaticHandler(relativePath string, fs http.FileS
 
 func (group *RouterGroup) combineHandlers(handlers HandlersChain) HandlersChain {
 	finalSize := len(group.Handlers) + len(handlers)
-	assert1(finalSize < int(abortIndex), "too many handlers")
+	assert1(finalSize < int(abortIndex), "处理器太多")
 	mergedHandlers := make(HandlersChain, finalSize)
 	copy(mergedHandlers, group.Handlers)
 	copy(mergedHandlers[len(group.Handlers):], handlers)
 	return mergedHandlers
 }
 
+// 计算相对路径
 func (group *RouterGroup) calculateAbsolutePath(relativePath string) string {
 	return joinPaths(group.basePath, relativePath)
 }

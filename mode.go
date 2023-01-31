@@ -38,9 +38,11 @@ const (
 //
 //	import "github.com/mattn/go-colorable"
 //	gin.DefaultWriter = colorable.NewColorableStdout()
+//
+// 默认标准输出
 var DefaultWriter io.Writer = os.Stdout
 
-// DefaultErrorWriter is the default io.Writer used by Gin to debug errors
+// 默认错误输出
 var DefaultErrorWriter io.Writer = os.Stderr
 
 var (
@@ -53,7 +55,7 @@ func init() {
 	SetMode(mode)
 }
 
-// SetMode sets gin mode according to input string.
+// 设置模式
 func SetMode(value string) {
 	if value == "" {
 		if flag.Lookup("test.v") != nil {

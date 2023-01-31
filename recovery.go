@@ -27,6 +27,7 @@ var (
 )
 
 // RecoveryFunc defines the function passable to CustomRecovery.
+// 定义一个 function 处理用户自定义恢复
 type RecoveryFunc func(c *Context, err any)
 
 // Recovery returns a middleware that recovers from any panics and writes a 500 if there was one.
@@ -55,7 +56,9 @@ func CustomRecoveryWithWriter(out io.Writer, handle RecoveryFunc) HandlerFunc {
 	}
 	return func(c *Context) {
 		defer func() {
+
 			if err := recover(); err != nil {
+				fmt.Printf("%v", "处理错误恢复问题")
 				// Check for a broken connection, as it is not really a
 				// condition that warrants a panic stack trace.
 				var brokenPipe bool
@@ -103,12 +106,14 @@ func CustomRecoveryWithWriter(out io.Writer, handle RecoveryFunc) HandlerFunc {
 	}
 }
 
+// 默认输出 500错误
 func defaultHandleRecovery(c *Context, err any) {
 	c.AbortWithStatus(http.StatusInternalServerError)
 }
 
 // stack returns a nicely formatted stack frame, skipping skip frames.
 func stack(skip int) []byte {
+	//打印调用栈
 	buf := new(bytes.Buffer) // the returned data
 	// As we loop, we open files and read them. These variables record the currently
 	// loaded file.
